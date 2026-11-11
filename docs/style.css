@@ -232,6 +232,30 @@ a { color: inherit; }
 }
 .out .given { color: var(--ink-2); }
 
+.sugs { margin-top: 16px; }
+.sug-row {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.sug-row .who { font-weight: 600; }
+.sug-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sug {
+  padding: 4px 10px 5px;
+  border: 1.5px solid var(--rule);
+  border-radius: 3px;
+  background: var(--chip);
+  color: var(--ink);
+  font: 400 20px/1.3 var(--serif);
+  cursor: pointer;
+}
+.sug:first-child { border-color: var(--ink); }
+.sug .pct { margin-left: 6px; font: 400 13px var(--sans); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.sug-none { color: var(--ink-2); font-size: 15px; }
+
 /* ---------------------------------------------------------------- results */
 .chart { margin: 0 0 24px; }
 .chart svg { display: block; width: 100%; height: auto; }
@@ -256,6 +280,7 @@ td.win { font-weight: 700; }
   body { font-size: 16px; }
   .hero { padding-top: 36px; }
   .outs.two { grid-template-columns: 1fr; }
+  .sug-row { grid-template-columns: 1fr; row-gap: 6px; }
   .verdict {
     grid-template-columns: auto 1fr auto;
     grid-template-areas: "who who mark" "a bar b";

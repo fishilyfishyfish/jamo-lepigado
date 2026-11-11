@@ -62,3 +62,23 @@ def test_gpt_matches_python(tmp_path):
     assert got.shape == ref.shape
     assert (got - ref).abs().max().item() < 1e-3
     assert abs(js["logprob"] - ref_logprob) < 1e-2
+
+
+def test_typing_variants(tmp_path):
+    """자판으로 치는 도중 상태 -> 자모 앞부분. 받침은 다음 음절 초성으로 넘어갈 수도 있음."""
+    from jamo.hangul import decompose
+    L = lambda ch: chr(0x1100 + "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ".index(ch))
+    cases = {
+        "": [""],
+        "ㅅ": [L("ㅅ")],
+        "서우": [decompose("서우")],
+        "성": [decompose("성"), decompose("서") + L("ㅇ")],
+        "닭": [decompose("닭"), decompose("달") + L("ㄱ")],
+        "한국의 값": [decompose("한국의 값"), decompose("한국의 갑") + L("ㅅ")],
+        "GPT": ["GPT"],
+    }
+    words = list(cases)
+    (tmp_path / "w.json").write_text(json.dumps(words, ensure_ascii=False), encoding="utf-8")
+    got = run_js("variants", tmp_path / "w.json")
+    for w, g in zip(words, got):
+        assert g == cases[w], w

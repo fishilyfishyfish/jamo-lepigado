@@ -5,7 +5,7 @@
 - **음절 BPE**: `낮`을 더 쪼갤 수 없는 글자 하나로 본다.
 - **자모 BPE**: `낮`을 `ㄴ ㅏ ㅈ`으로 풀어서 본다.
 
-**[웹 데모](https://fishilyfishyfish.github.io/jamo-lepigado/)**: 두 모델을 브라우저에서 직접 돌린다. 토크나이저가 문장을 어떻게 자르는지 보고, 가짜 단어로 조사 고르기를 시키고, 이어 쓰기도 해볼 수 있다.
+**[웹 데모](https://fishilyfishyfish.github.io/jamo-lepigado/)**: 두 모델을 브라우저에서 직접 돌린다. 토크나이저가 문장을 어떻게 자르는지 보고, 치는 도중에 단어를 맞히게 하고(‘서우’까지 치면 ‘서울’), 가짜 단어로 조사 고르기를 시키고, 이어 쓰기도 해볼 수 있다.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fishilyfishyfish/jamo-lepigado/blob/main/colab.ipynb)
 
@@ -74,6 +74,7 @@
 - 형태소 분리를 더해서 2×2(음절/자모 × 형태소 분리 유무) 비교
 - 시드를 바꿔 여러 번 학습시켜서 오차 범위 구하기
 - 데이터 정리에서 한자를 지우면서 남은 빈 괄호 `()` 없애기. 지금은 생성 문장에 그대로 나온다.
+- 치는 도중 단어 맞히기를 수치로 재기. 검증 문장을 자판 입력 순서대로 쪼개서, 각 중간 상태에서 정답 단어가 추천 3개 안에 드는 비율을 본다. 지금 데모는 두 모델 모두 같은 자모 앞부분 규칙으로 후보를 거르기 때문에, 차이는 모델이 매기는 확률에서만 난다.
 
 ## 직접 돌리기
 

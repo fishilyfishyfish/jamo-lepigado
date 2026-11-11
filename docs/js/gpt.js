@@ -70,6 +70,13 @@ export class GPT {
     };
   }
 
+  // 캐시 복사본. 쓰인 부분만 복사하고 extra 토큰만큼 자리를 더 잡음 (후보를 여러 갈래로 펼칠 때 씀)
+  cloneCache(cache, extra) {
+    const C = this.cfg.n_embd, used = cache.len * C, size = (cache.len + extra) * C;
+    const cp = (arr) => { const a = new Float32Array(size); a.set(arr.subarray(0, used)); return a; };
+    return { len: cache.len, k: cache.k.map(cp), v: cache.v.map(cp) };
+  }
+
   // out = W x + b, W는 (rows, cols) 행 우선
   static linear(out, W, b, x, rows, cols) {
     for (let r = 0; r < rows; r++) {
@@ -95,7 +102,7 @@ export class GPT {
   step(token, cache) {
     const { n_layer, n_head, n_embd: C, block, vocab } = this.cfg;
     const W = this.W, p = cache.len;
-    if (p >= block) throw new Error("context full");
+    if (p >= block || (p + 1) * C > cache.k[0].length) throw new Error("context full");
     const hd = C / n_head, sc = 1 / Math.sqrt(hd);
     const x = this.x, h = this.h, qkv = this.qkv, att = this.att, tmp = this.tmp, mlp = this.mlp;
     const te = W["tok.weight"], pe = W["pos.weight"];

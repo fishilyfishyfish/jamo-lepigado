@@ -1,9 +1,13 @@
 // 모델 추론은 화면이 버벅이지 않게 워커에서 돌림.
-import { BPE, EOS } from "./bpe.js";
+import { BPE, EOS, SPACE } from "./bpe.js";
 import { GPT, rng, sample } from "./gpt.js";
+import { typingVariants } from "./hangul.js";
+import { ContextCache, suggestWords } from "./suggest.js";
 
 const models = {};
 const REP_PENALTY = 1.3;
+const contexts = {};      // 모드별 앞 문맥 캐시 (단어 추천용)
+const latestSuggest = {}; // 모드별 가장 최근 추천 요청 id
 let stopped = false;
 const url = (p) => new URL(p, import.meta.url).href;
 
@@ -57,6 +61,15 @@ self.onmessage = async (e) => {
     } else if (cmd === "josa") {
       const { tok, gpt } = await get(args.mode, id);
       result = args.sentences.map((s) => gpt.logProb([EOS, ...tok.encode(s)]));
+    } else if (cmd === "suggest") {
+      latestSuggest[args.mode] = id;
+      await new Promise((r) => setTimeout(r, 0));  // 그사이 들어온 새 요청이 있으면 이건 건너뜀
+      if (latestSuggest[args.mode] === id) {
+        const { tok, gpt } = await get(args.mode, id);
+        const cc = (contexts[args.mode] ||= new ContextCache(gpt));
+        cc.update([EOS, ...tok.encode(args.context)]);
+        result = suggestWords(tok, gpt, cc, typingVariants(args.partial).map((p) => SPACE + p));
+      }
     } else if (cmd === "generate") {
       stopped = false;
       await generate(id, args);

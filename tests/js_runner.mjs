@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 import { BPE } from "../docs/js/bpe.js";
 import { GPT } from "../docs/js/gpt.js";
-import { clean, compose, decompose } from "../docs/js/hangul.js";
+import { clean, compose, decompose, typingVariants } from "../docs/js/hangul.js";
 
 const [cmd, a, b] = process.argv.slice(2);
 const json = (p) => JSON.parse(readFileSync(p, "utf8"));
@@ -16,6 +16,8 @@ if (cmd === "tok") {
     const ids = tok.encode(s);
     return { ids, dec: tok.decode(ids), clean: clean(s), rt: compose(decompose(s)) === s };
   })));
+} else if (cmd === "variants") {
+  console.log(JSON.stringify(json(a).map((w) => typingVariants(w))));
 } else if (cmd === "gpt") {
   const buf = readFileSync(`${a}/weights.bin`);
   const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);

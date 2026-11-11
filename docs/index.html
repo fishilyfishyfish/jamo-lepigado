@@ -46,6 +46,17 @@
     <div class="progress" id="progress" hidden><div class="progress-bar" id="progress-bar"></div></div>
   </section>
 
+  <section class="block" id="typing" aria-labelledby="typing-title">
+    <h2 id="typing-title">치는 도중에 단어 맞히기</h2>
+    <p>한글 자판으로 ‘서울’을 치면 화면은 ㅅ, 서, 성, 서우, 서울을 거쳐 간다. 덜 친 상태에서 단어를 맞히려면 ‘서우’가 ‘서울’의 앞부분이라는 걸 알아야 하는데, 자모로 풀면 ㅅㅓㅇㅜ가 ㅅㅓㅇㅜㄹ의 앞부분이라 바로 보인다. 두 모델 모두 후보를 자모로 풀어서 지금까지 친 것과 앞부분이 맞는 것만 남기고, 그중 무엇을 더 그럴듯하게 보는지가 다르다.</p>
+    <label class="field">
+      <span>쳐 보기</span>
+      <input id="typing-input" type="text" value="한국의 수도는 서우" autocomplete="off" autocorrect="off" spellcheck="false">
+    </label>
+    <div class="sugs" id="sugs" aria-live="polite"></div>
+    <p class="hint" id="typing-hint">모델을 불러오면 추천이 나온다.</p>
+  </section>
+
   <section class="block" id="josa" aria-labelledby="josa-title">
     <h2 id="josa-title">받침 보고 조사 고르기</h2>
     <p>조사는 앞 글자의 받침에 따라 바뀐다. 사전에 없는 가짜 단어를 넣어도 맞는 조사를 고르는지 본다. 음절 모델에게 ‘콩’은 더 쪼갤 수 없는 기호 하나지만, 자모 모델은 그 안의 받침 ㅇ을 따로 본다.</p>

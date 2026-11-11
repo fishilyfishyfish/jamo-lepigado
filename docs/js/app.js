@@ -74,7 +74,7 @@ async function initTokenizers() {
   } catch {
     $("cuts").hidden = true;
     $("tok-empty").hidden = false;
-    $("josa-hint").textContent = $("gen-hint").textContent = "학습된 모델이 아직 없다.";
+    $("josa-hint").textContent = $("gen-hint").textContent = $("typing-hint").textContent = "학습된 모델이 아직 없다.";
     return false;
   }
   renderCuts();
@@ -109,7 +109,9 @@ async function initLoader() {
       $("loader").hidden = true;
       $("gen-btn").disabled = false;
       $("gen-hint").hidden = true;
+      $("typing-hint").hidden = true;
       runJosa();
+      runSuggest();
     } catch (err) {
       btn.disabled = false;
       btn.textContent = "다시 불러오기";
@@ -117,6 +119,60 @@ async function initLoader() {
     }
   });
 }
+
+// ---------------------------------------------------------------- 치는 도중 단어 맞히기
+const typing = $("typing-input");
+let sugRun = 0, sugTimer = null;
+
+// 입력을 앞 문맥과 지금 치는 단어로 나눔. 끝이 공백이면 다음 단어를 맞힘.
+function splitTyping(v) {
+  const raw = v.normalize("NFC").replace(/[^\u0020-\u007e\uac00-\ud7a3\u3131-\u318e]/g, "").replace(/ {2,}/g, " ");
+  const body = raw.trim();
+  if (/ $/.test(raw) || !body) return { context: body, partial: "" };
+  const i = body.lastIndexOf(" ");
+  return { context: i < 0 ? "" : body.slice(0, i), partial: body.slice(i + 1) };
+}
+
+async function runSuggest() {
+  if (!loaded) return;
+  const run = ++sugRun;
+  const { context, partial } = splitTyping(typing.value);
+  const order = ["jamo", "syl"];
+  let results;
+  try {
+    results = await Promise.all(order.map((m) => call("suggest", { mode: m, context, partial })));
+  } catch (err) {
+    $("sugs").replaceChildren(el("p", "sug-none", `추천하다 멈췄다: ${err.message}`));
+    return;
+  }
+  if (run !== sugRun || results.some((r) => r === null)) return;  // 그사이 입력이 바뀜
+  const rows = order.map((m, k) => {
+    const row = el("div", "sug-row");
+    const chips = el("div", "sug-chips");
+    const list = results[k].filter((x, i) => i === 0 || x.p >= 0.01);  // 1% 미만은 안 보여줌
+    if (!list.length) chips.append(el("span", "sug-none", "후보 없음"));
+    for (const { word, p } of list) {
+      const b = el("button", "sug", word);
+      b.type = "button";
+      b.append(el("span", "pct", `${Math.round(p * 100)}%`));
+      b.addEventListener("click", () => {
+        const { context: c } = splitTyping(typing.value);
+        typing.value = (c ? c + " " : "") + word + " ";
+        typing.focus();
+        runSuggest();
+      });
+      chips.append(b);
+    }
+    row.append(el("span", "who", NAME[m]), chips);
+    return row;
+  });
+  $("sugs").replaceChildren(...rows);
+}
+
+typing.addEventListener("input", () => {
+  clearTimeout(sugTimer);
+  sugTimer = setTimeout(runSuggest, 180);
+});
 
 // ---------------------------------------------------------------- 받침-조사
 const batchim = (w) => tailIndex(w) !== 0;
