@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jamo-lepigado: 받침을 보는 토크나이저</title>
+<meta name="description" content="자모 단위 BPE와 음절 단위 BPE로 각각 학습한 한국어 미니 GPT를 브라우저에서 직접 돌려 비교한다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;600;750&family=IBM+Plex+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="name" href="./">jamo-lepigado</a>
+  <a class="repo" id="repo-link" href="https://github.com/fishilyfishyfish/jamo-lepigado">GitHub</a>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title" class="visually-hidden">자모 토크나이저와 음절 토크나이저 비교</h1>
+    <label for="specimen" class="visually-hidden">자를 문장</label>
+    <textarea id="specimen" class="specimen" rows="1" spellcheck="false">낮과 낯은 소리가 같다</textarea>
+    <p class="lede">같은 데이터로 한국어 GPT를 두 번 학습시켰다. 다른 건 글을 자르는 방식 하나다. 위 문장을 고치면 두 토크나이저가 어떻게 자르는지 바로 보인다.</p>
+
+    <div class="cuts" id="cuts" aria-live="polite">
+      <div class="cut" data-mode="syl">
+        <div class="cut-head"><span class="cut-name">음절 단위</span><span class="cut-count" id="count-syl"></span></div>
+        <div class="chips" id="chips-syl"></div>
+      </div>
+      <div class="cut" data-mode="jamo">
+        <div class="cut-head"><span class="cut-name">자모 단위</span><span class="cut-count" id="count-jamo"></span></div>
+        <div class="chips" id="chips-jamo"></div>
+      </div>
+      <p class="legend" aria-hidden="true">
+        <span class="j-l">ㄴ</span> 초성 <span class="j-v">ㅏ</span> 중성 <span class="j-t">ㅊ</span> 받침
+        <span class="sp">▁</span> 단어 시작
+      </p>
+    </div>
+    <p class="empty" id="tok-empty" hidden>학습된 토크나이저가 아직 없다. 저장소의 Colab 노트북을 돌리면 결과가 여기에 올라온다.</p>
+  </section>
+
+  <section class="loader" id="loader" hidden>
+    <p>아래 두 실험은 모델을 브라우저로 받아서 직접 돌린다.</p>
+    <button type="button" id="load-btn" class="btn">모델 불러오기</button>
+    <div class="progress" id="progress" hidden><div class="progress-bar" id="progress-bar"></div></div>
+  </section>
+
+  <section class="block" id="josa" aria-labelledby="josa-title">
+    <h2 id="josa-title">받침 보고 조사 고르기</h2>
+    <p>조사는 앞 글자의 받침에 따라 바뀐다. 사전에 없는 가짜 단어를 넣어도 맞는 조사를 고르는지 본다. 음절 모델에게 ‘콩’은 더 쪼갤 수 없는 기호 하나지만, 자모 모델은 그 안의 받침 ㅇ을 따로 본다.</p>
+    <div class="josa-form">
+      <label class="field">
+        <span>단어</span>
+        <input id="noun" type="text" value="뮤콩" maxlength="8" autocomplete="off" spellcheck="false">
+      </label>
+      <button type="button" id="nonce-btn" class="btn quiet">가짜 단어 만들기</button>
+    </div>
+    <div class="pairs" role="radiogroup" aria-label="조사">
+      <button type="button" role="radio" class="pair" data-t="0" aria-checked="true">을/를</button>
+      <button type="button" role="radio" class="pair" data-t="1" aria-checked="false">이/가</button>
+      <button type="button" role="radio" class="pair" data-t="2" aria-checked="false">은/는</button>
+      <button type="button" role="radio" class="pair" data-t="3" aria-checked="false">으로/로</button>
+    </div>
+    <p class="josa-sentence" id="josa-sentence"></p>
+    <div class="verdicts" id="verdicts" aria-live="polite"></div>
+    <p class="hint" id="josa-hint">모델을 불러오면 결과가 나온다.</p>
+  </section>
+
+  <section class="block" id="gen" aria-labelledby="gen-title">
+    <h2 id="gen-title">이어 쓰기</h2>
+    <div class="gen-form">
+      <label class="field grow">
+        <span>시작 문장</span>
+        <input id="prompt" type="text" value="세종대왕은" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="seg" role="radiogroup" aria-label="모델">
+        <button type="button" role="radio" class="seg-btn" data-m="both" aria-checked="true">나란히</button>
+        <button type="button" role="radio" class="seg-btn" data-m="jamo" aria-checked="false">자모</button>
+        <button type="button" role="radio" class="seg-btn" data-m="syl" aria-checked="false">음절</button>
+      </div>
+      <button type="button" id="gen-btn" class="btn" disabled>이어 쓰기</button>
+    </div>
+    <div class="outs" id="outs" aria-live="polite"></div>
+    <p class="hint" id="gen-hint">모델을 불러오면 쓸 수 있다.</p>
+  </section>
+
+  <section class="block" id="results" aria-labelledby="results-title" hidden>
+    <h2 id="results-title">결과</h2>
+    <p>bpc는 글자 하나를 맞히는 데 드는 평균 비트 수다. 토크나이저마다 토큰 길이가 달라서 토큰당 손실 대신 글자 기준으로 비교한다. 낮을수록 좋다.</p>
+    <figure class="chart" id="chart"></figure>
+    <div class="table-wrap"><table id="table"></table></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>토크나이저(자모 분해와 BPE)와 브라우저 추론은 라이브러리 없이 직접 짰고, 학습은 PyTorch로 했다. 학습 데이터는 한국어 위키백과다.</p>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

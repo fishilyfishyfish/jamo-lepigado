@@ -1,0 +1,6 @@
+out/
+corpus.txt
+*.pt
+__pycache__/
+.pytest_cache/
+results.zip
