@@ -3,6 +3,7 @@ import { BPE, EOS } from "./bpe.js";
 import { GPT, rng, sample } from "./gpt.js";
 
 const models = {};
+const REP_PENALTY = 1.3;
 let stopped = false;
 const url = (p) => new URL(p, import.meta.url).href;
 
@@ -27,6 +28,10 @@ async function generate(id, { mode, prompt, len, temp, topk, seed }) {
   let logits;
   for (const t of ids) logits = gpt.step(t, cache);
   for (let i = 0; i < len && !stopped; i++) {
+    // 작은 모델은 같은 말을 반복하기 쉬워서, 최근 64토큰 안에 나온 토큰은 확률을 깎음
+    for (const t of new Set(ids.slice(-64))) {
+      if (t !== EOS) logits[t] = logits[t] > 0 ? logits[t] / REP_PENALTY : logits[t] * REP_PENALTY;
+    }
     const next = sample(logits, temp, topk, rand);
     if (next === EOS) break;
     ids.push(next);
